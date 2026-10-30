@@ -1,0 +1,137 @@
+// Business card schema.
+// Profile owns experience and projects (cascade delete), skills are a shared catalogue
+// joined to profiles and projects. snake_case in the database via @map, endDate = null
+// means the position is still ongoing.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SkillCategory {
+  LANGUAGE
+  FRAMEWORK
+  DATABASE
+  DEVOPS
+  TOOL
+  SOFT_SKILL
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model Profile {
+  id          String   @id @default(uuid()) @db.Uuid
+  slug        String   @unique
+  fullName    String   @map("full_name")
+  headline    String
+  description String
+  location    String?
+  email       String?
+  avatarUrl   String?  @map("avatar_url")
+  githubUrl   String?  @map("github_url")
+  linkedinUrl String?  @map("linkedin_url")
+  telegramUrl String?  @map("telegram_url")
+  websiteUrl  String?  @map("website_url")
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  skills     ProfileSkill[]
+  experience Experience[]
+  projects   Project[]
+
+  @@map("profiles")
+}
+
+/// Shared skill catalogue (a skill may be attached to many profiles and projects).
+model Skill {
+  id        String        @id @default(uuid()) @db.Uuid
+  name      String        @unique
+  category  SkillCategory
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  profiles ProfileSkill[]
+  projects ProjectSkill[]
+
+  @@map("skills")
+}
+
+/// Join table between a profile and a skill, enriched with per-profile metadata.
+model ProfileSkill {
+  profileId         String     @map("profile_id") @db.Uuid
+  skillId           String     @map("skill_id") @db.Uuid
+  level             SkillLevel @default(INTERMEDIATE)
+  yearsOfExperience Int?       @map("years_of_experience")
+  sortOrder         Int        @default(0) @map("sort_order")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, skillId])
+  @@index([skillId])
+  @@map("profile_skills")
+}
+
+model Experience {
+  id           String    @id @default(uuid()) @db.Uuid
+  profileId    String    @map("profile_id") @db.Uuid
+  company      String
+  position     String
+  startDate    DateTime  @map("start_date") @db.Date
+  endDate      DateTime? @map("end_date") @db.Date
+  summary      String?
+  achievements String[]  @default([])
+  sortOrder    Int       @default(0) @map("sort_order")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, sortOrder])
+  @@map("experience")
+}
+
+model Project {
+  id            String    @id @default(uuid()) @db.Uuid
+  profileId     String    @map("profile_id") @db.Uuid
+  slug          String    @unique
+  name          String
+  description   String?
+  url           String?
+  repositoryUrl String?   @map("repository_url")
+  startDate     DateTime? @map("start_date") @db.Date
+  endDate       DateTime? @map("end_date") @db.Date
+  featured      Boolean   @default(false)
+  sortOrder     Int       @default(0) @map("sort_order")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile      Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  technologies ProjectSkill[]
+
+  @@index([profileId, sortOrder])
+  @@map("projects")
+}
+
+/// Join table between a project and a skill from the shared catalogue.
+model ProjectSkill {
+  projectId String @map("project_id") @db.Uuid
+  skillId   String @map("skill_id") @db.Uuid
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, skillId])
+  @@index([skillId])
+  @@map("project_skills")
+}
