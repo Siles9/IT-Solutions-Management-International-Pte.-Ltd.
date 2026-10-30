@@ -1,0 +1,209 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AddExperienceInput {
+  achievements: [String!]
+  company: String!
+  endDate: DateTime
+  position: String!
+  startDate: DateTime!
+  summary: String
+}
+
+input AddProjectInput {
+  description: String
+  endDate: DateTime
+  featured: Boolean = false
+  name: String!
+  repositoryUrl: String
+
+  """Generated from the name when omitted."""
+  slug: String
+  startDate: DateTime
+
+  """Technology names; missing catalogue entries are created automatically."""
+  technologies: [String!]
+  url: String
+}
+
+input AddSkillInput {
+  """Used only when the catalogue entry is created for the first time."""
+  category: SkillCategory!
+  level: SkillLevel = INTERMEDIATE
+
+  """Catalogue entries are unique by name; duplicates are reused."""
+  name: String!
+  yearsOfExperience: Int
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+"""A position held by the profile owner."""
+type Experience {
+  """Concrete, verifiable results."""
+  achievements: [String!]!
+  company: String!
+
+  """`null` means the position is still ongoing."""
+  endDate: DateTime
+  id: ID!
+
+  """Derived from `endDate`: true while the position is ongoing."""
+  isCurrent: Boolean!
+  position: String!
+  startDate: DateTime!
+  summary: String
+}
+
+type Mutation {
+  """Appends a position to the primary profile."""
+  addExperience(input: AddExperienceInput!): Experience!
+
+  """Adds a project to the primary profile and links its technologies."""
+  addProject(input: AddProjectInput!): Project!
+
+  """
+  Attaches a skill to the primary profile. Re-adding an existing skill updates the level.
+  """
+  addSkill(input: AddSkillInput!): Skill!
+
+  """Partial update of the primary profile. `null` clears a nullable field."""
+  updateProfile(input: UpdateProfileInput!): Profile!
+}
+
+"""Public digital business card of a specialist."""
+type Profile {
+  avatarUrl: String
+  createdAt: DateTime!
+  description: String!
+  email: String
+
+  """Work history, newest first."""
+  experience: [Experience!]!
+  fullName: String!
+
+  """
+  One-line positioning, e.g. "Backend-разработчик · TypeScript / NestJS".
+  """
+  headline: String!
+  id: ID!
+
+  """Only the professional links that are actually filled in."""
+  links: [ProfileLink!]!
+  location: String
+
+  """Portfolio projects, featured first."""
+  projects: [Project!]!
+
+  """Skills attached to this profile, in curated order."""
+  skills: [Skill!]!
+
+  """Stable, human-readable identifier used by the seed and CLI tools."""
+  slug: String!
+  updatedAt: DateTime!
+}
+
+"""A professional resource the profile owner can be reached at."""
+type ProfileLink {
+  type: ProfileLinkType!
+  url: String!
+}
+
+"""Kind of professional resource behind a link."""
+enum ProfileLinkType {
+  EMAIL
+  GITHUB
+  LINKEDIN
+  TELEGRAM
+  WEBSITE
+}
+
+"""A portfolio project with the technologies it uses."""
+type Project {
+  description: String
+  endDate: DateTime
+
+  """Featured projects are highlighted in client UIs."""
+  featured: Boolean!
+  id: ID!
+  name: String!
+
+  """Source code repository."""
+  repositoryUrl: String
+
+  """Unique, URL-friendly identifier."""
+  slug: String!
+  startDate: DateTime
+
+  """Technologies used in the project."""
+  technologies: [Skill!]!
+
+  """Live demo, when available."""
+  url: String
+}
+
+type Query {
+  """The primary profile that owns this business card."""
+  profile: Profile!
+
+  """
+  All profiles. The API is ready for a team card even though the seed has one.
+  """
+  profiles: [Profile!]!
+
+  """The whole skill catalogue, optionally filtered by category."""
+  skills(filter: SkillFilterInput): [Skill!]!
+}
+
+"""A technology or skill from the shared catalogue."""
+type Skill {
+  category: SkillCategory!
+  id: ID!
+
+  """Level within the current profile. Only populated on `Profile.skills`."""
+  level: SkillLevel
+  name: String!
+
+  """Years of hands-on experience. Only populated on `Profile.skills`."""
+  yearsOfExperience: Int
+}
+
+"""Broad grouping used to filter the skill catalogue."""
+enum SkillCategory {
+  DATABASE
+  DEVOPS
+  FRAMEWORK
+  LANGUAGE
+  SOFT_SKILL
+  TOOL
+}
+
+input SkillFilterInput {
+  category: SkillCategory
+}
+
+"""Self-assessed proficiency level for a skill attached to a profile."""
+enum SkillLevel {
+  ADVANCED
+  BEGINNER
+  EXPERT
+  INTERMEDIATE
+}
+
+input UpdateProfileInput {
+  """Absolute URL of the avatar image."""
+  avatarUrl: String
+  description: String
+  email: String
+  fullName: String
+  githubUrl: String
+  headline: String
+  linkedinUrl: String
+  location: String
+  telegramUrl: String
+  websiteUrl: String
+}
