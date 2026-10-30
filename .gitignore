@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Generated Prisma Client (recreated by `npm ci` / `prisma generate`)
+src/generated/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Tests
+coverage/
+
+# Logs and OS/editor noise
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Local database data (docker volume / embedded postgres)
+.data/
